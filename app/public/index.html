@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Vote for Cat or Dog</title>
+  <style>
+    body { font-family: Arial; text-align: center; margin-top: 50px; }
+    button { font-size: 20px; margin: 10px; padding: 10px 20px; }
+    .counter { font-size: 24px; margin: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Vote for Your Favorite Pet</h1>
+  <div>
+    <button onclick="vote('cat')">Vote for Cat 🐱</button>
+    <button onclick="vote('dog')">Vote for Dog 🐶</button>
+  </div>
+  <div class="counter" id="catCounter">Cat Votes: 0</div>
+  <div class="counter" id="dogCounter">Dog Votes: 0</div>
+
+  <script>
+    async function vote(animal) {
+      await fetch(`/vote/${animal}`, { method: 'POST' });
+      await updateCounts();
+    }
+
+    async function updateCounts() {
+      const res = await fetch('/votes');
+      const data = await res.json();
+      document.getElementById('catCounter').innerText = `Cat Votes: ${data.cat || 0}`;
+      document.getElementById('dogCounter').innerText = `Dog Votes: ${data.dog || 0}`;
+    }
+
+    updateCounts();
+  </script>
+</body>
+</html>
