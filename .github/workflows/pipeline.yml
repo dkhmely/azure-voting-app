@@ -19,7 +19,7 @@ jobs:
   build:
     name: Build Docker image
     runs-on: ubuntu-latest
-    env: ${{ env.ENV }}
+    environment: ${{ env.ENV }}
 
     steps:
       - name: Checkout repo
@@ -48,3 +48,38 @@ jobs:
         run: |
           docker tag localimage:${{ github.sha }} ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }}
           docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }}
+  deploy:
+    name: Deploy Docker image
+    needs: build
+    runs-on: ubuntu-latest
+    environment: ${{ env.ENV }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      
+      - name: Set Deployment Variables
+        run: | 
+          echo "ACR_NAME=voter${{ env.ENV }}acr" >> $GITHUB_ENV
+          echo "APP_NAME=voter-${{ env.ENV }}-app" >> $GITHUB_ENV
+          echo "RESOURCE_GROUP=voter-${{ env.ENV }}-rg" >> $GITHUB_ENV
+          echo "ENV=${{ env.ENV }}" >> $GITHUB_ENV
+      
+      - name: Login Azure CLI
+        run: az login --service-principal --username "$AZURE_CLIENT_ID" --password "$AZURE_CLIENT_SECRET" --tenant "$AZURE_TENANT_ID"
+
+      - name: Set MSI on Web app
+        run: |
+          az webapp config set \
+           --name {env.APP_NAME} \
+           --resource-group {env.RESOURCE_GROUP} \
+           --generic-configurations '{"acrUseManagedIdentityCreds": true}'
+      
+      - name: Deploy image on Web app
+        run: |
+          az webapp config container set \
+          --name {env.APP_NAME} \
+          --resource-group {env.RESOURCE_GROUP} \
+          --docker-custom-image-name {env.ACR_NAME}.azurecr.io/{env.APP_NAME}:${{ github.sha }}
+        
+      
