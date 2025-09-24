@@ -44,11 +44,11 @@ jobs:
         working-directory: app
         run: |
           docker buildx build -t localimage:${{ github.sha }} .
+          docker tag localimage:${{ github.sha }} ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }}
       
       - name: Push image
         working-directory: app
         run: |
-          docker tag localimage:${{ github.sha }} ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }}
           docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }}
   deploy:
     name: Deploy Docker image
