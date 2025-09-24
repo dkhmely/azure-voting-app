@@ -1,0 +1,50 @@
+name: Build and Deploy web app
+
+on:
+  push:
+    branches:
+      - dev
+      - qa
+      - stage
+      - main
+
+env:
+  ENV: ${{ github.ref_name }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+jobs:
+  build:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    env: ${{ env.ENV }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      
+      - name: Set Deployment Variables
+        run: | 
+          echo "ACR_NAME=voter${{ env.ENV }}acr" >> $GITHUB_ENV
+          echo "APP_NAME=voter-${{ env.ENV }}-app" >> $GITHUB_ENV
+          echo "RESOURCE_GROUP=voter-${{ env.ENV }}-rg" >> $GITHUB_ENV
+          echo "ENV=${{ env.ENV }}" >> $GITHUB_ENV
+      
+      - name: Login Azure CLI
+        run: az login --service-principal --username "$AZURE_CLIENT_ID" --password "$AZURE_CLIENT_SECRET" --tenant "$AZURE_TENANT_ID"
+
+      - name: Login Azure CR
+        run: az acr login -name ${{ env.ACR_NAME }}
+
+      - name: Build image
+        working-directory: app
+        run: |
+          docker build -t localimage:${{ github.sha }}
+      
+      - name: Push image
+        working-directory: app
+        run: |
+          docker tag localimage:${{ github.sha }} ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }}
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }}
