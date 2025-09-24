@@ -43,7 +43,7 @@ jobs:
       - name: Build image
         working-directory: app
         run: |
-          docker build -t localimage:${{ github.sha }}
+          docker buildx build -t localimage:${{ github.sha }}
       
       - name: Push image
         working-directory: app
