@@ -37,10 +37,13 @@ jobs:
       - name: Login Azure CR
         run: az acr login --name ${{ env.ACR_NAME }}
 
+      - name: Setup Docker build
+        uses: docker/setup-buildx-action@v3
+
       - name: Build image
         working-directory: app
         run: |
-          docker buildx build -t localimage:${{ github.sha }}
+          docker build -t localimage:${{ github.sha }}
       
       - name: Push image
         working-directory: app
