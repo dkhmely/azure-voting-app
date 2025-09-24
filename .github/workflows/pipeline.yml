@@ -73,15 +73,15 @@ jobs:
       - name: Set MSI on Web app
         run: |
           az webapp config set \
-           --name {env.APP_NAME} \
-           --resource-group {env.RESOURCE_GROUP} \
+           --name ${{env.APP_NAME}} \
+           --resource-group ${{env.RESOURCE_GROUP}} \
            --generic-configurations '{"acrUseManagedIdentityCreds": true}'
       
       - name: Deploy image on Web app
         run: |
           az webapp config container set \
-          --name {env.APP_NAME} \
-          --resource-group {env.RESOURCE_GROUP} \
-          --docker-custom-image-name {env.ACR_NAME}.azurecr.io/{env.APP_NAME}:${{ github.sha }}
+          --name ${{env.APP_NAME}} \
+          --resource-group ${{env.RESOURCE_GROUP}} \
+          --docker-custom-image-name ${{env.ACR_NAME}}.azurecr.io/${{env.APP_NAME}}:${{ github.sha }}
         
       
